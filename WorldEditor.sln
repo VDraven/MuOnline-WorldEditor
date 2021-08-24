@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WorldEditor", "WorldEditor\WorldEditor.vcxproj", "{F46B3ED3-56BF-4B7F-9DEB-DA1B1C7C55F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F46B3ED3-56BF-4B7F-9DEB-DA1B1C7C55F3}.Release|x86.ActiveCfg = Release|Win32
+		{F46B3ED3-56BF-4B7F-9DEB-DA1B1C7C55F3}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59AF7FC1-EBCA-4D7A-B3F3-B0D4DBEB6CE1}
+	EndGlobalSection
+EndGlobal

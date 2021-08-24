@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\imgui">
+      <UniqueIdentifier>{4a00dffe-cd59-4122-9376-6f709b266f1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WorldEditor">
+      <UniqueIdentifier>{1f0d6b94-28b7-4894-a487-8f1fd732a28b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Misc">
+      <UniqueIdentifier>{6d055f0f-f1ec-486d-bdf3-0d6dae7d4077}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PCH.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui.hpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_impl_opengl2.hpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_impl_win32.hpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEditor.h">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEditorOffset.h">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEditorStruct.h">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Source Files\Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="ZzzTexture.h">
+      <Filter>Source Files\Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalBitmap.h">
+      <Filter>Source Files\Misc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PCH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditor.cpp">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditorEdit.cpp">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditorUI.cpp">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="ZzzTexture.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalBitmap.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditorSave.cpp">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEditorHook.cpp">
+      <Filter>Source Files\WorldEditor</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
