@@ -123,7 +123,7 @@ void WorldEditor::SetFreeMode()
 		Hero->Object.Position[2] = HeroPosOld[2];
 
 		CameraDistance = 1000.0f;
-		CameraAngle[2] = 45.0f;
+		CameraAngle[2] = -45.0f;
 
 		__UnRegisterBuff(BUFF_ADMIN_INVISIBLE, &Hero->Object);
 	}
@@ -277,6 +277,8 @@ void WorldEditor::UI()
 
 void WorldEditor::UI_SaveWorld()
 {
+	EditFlag = WorldEditor::EDIT_NONE;
+
 	ImGui::InputInt("SaveWorldID", &SaveWorldConfig.nWorldID, 1, 10);
 	if (SaveWorldConfig.nWorldID <= 0) SaveWorldConfig.nWorldID = 1;
 
