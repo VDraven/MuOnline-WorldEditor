@@ -2,6 +2,7 @@
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
   
 This is an in-game WorldEditor for Mu Online Season 16e1 (Main version : 1.19.46)  
+(No support for other versions)  
 Main 1.19.46 unpacked by me can be found here: "https://github.com/VD1988/MuOnline_S16_Lgd/tree/main/Main"  
   
 It's been testing with server files released by MuLegend.  
@@ -27,4 +28,4 @@ Then remember to copy-paste "Plugins" folder to the client location.
 //
 ```
 
-# This project is not completed.
+# This project is incompleted.
