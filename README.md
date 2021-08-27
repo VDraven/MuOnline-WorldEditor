@@ -1,4 +1,5 @@
 ## MuOnline-WorldEditor  
+"https://youtu.be/629J5BmGAXQ"  
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
   
 This is an in-game WorldEditor for Mu Online Season 16e1 (Main version : 1.19.46)  
@@ -15,7 +16,7 @@ Copy these lines to Main.cpp :
 	if (!hInstance) 
 		MessageBoxA(NULL, "Could not load the WorldEditor.dll", "ERROR", MB_OK);
 ```
-Or hooking directly from main.exe is also OK.  
+Or hooking directly to main.exe is also OK.  
 Then remember to copy-paste "Plugins" folder to the client location.  
 ```
 //  MuOnline-Client
