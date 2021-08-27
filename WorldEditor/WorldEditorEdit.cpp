@@ -24,7 +24,6 @@ void WorldEditor::Edit()
 //FIXME : Need a better way to rewrite this part !!!
 void WorldEditor::EditCamera()
 {
-	
 	if (!FreeMode) return;
 
 	if (__IsKeyPress(VK_PRIOR))	//PAGE UP
@@ -232,7 +231,7 @@ void WorldEditor::EditObjects()
 					if (RenderTerrainTile(SelectXF, SelectYF, (int)SelectXF, (int)SelectYF, 1.0f, 1, 1))
 					{
 						
-						PickObject = __CreateObject(ObjCreatePrepare_ctor(&temp, SelectObjectType, CollisionPosition, PickObjectAngle, PickObjectScale, 1, 1, 1));
+						PickObject = __CreateObject(ObjCreatePrepare__ctor(&temp, SelectObjectType, CollisionPosition, PickObjectAngle, PickObjectScale, 1, 1, 1));
 					}
 				}
 				else if (EditFlag == WorldEditor::EDIT_MONSTER)

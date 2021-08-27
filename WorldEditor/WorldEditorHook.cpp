@@ -4,6 +4,7 @@ void HookRenderMuEditor();
 void HookRenderTerrainTile(float xf, float yf, int xi, int yi, float lodf, int lodi, bool Flag);
 void HookFixBmdName(char* DirName, char* ModelFileName, char bReAlloc);
 void HookOpenObj();
+void HookOpenWorld();
 
 void WorldEditor::SetHooks()
 {
@@ -11,12 +12,23 @@ void WorldEditor::SetHooks()
 	SetCompleteHook(0xE9, OFFSET_HOOK_RENDER_MU_EDITOR, &HookRenderMuEditor);
 	SetCompleteHook(0xE9, OFFSET_HOOK_RENDER_TERRAINTILE, &HookRenderTerrainTile);
 	SetCompleteHook(0xE9, OFFSET_HOOK_FIX_BMD_NAME, &HookFixBmdName);
-	SetCompleteHook(0xE9, OFFSET_HOOK_OPEN_OBJ, &HookOpenObj);
+	//SetCompleteHook(0xE9, OFFSET_HOOK_OPEN_OBJ, &HookOpenObj);
 
 	//CALL 0xE8
+	SetCompleteHook(0xE8, OFFSET_HOOK_OPEN_WORLD, &HookOpenWorld);
 }
 
 WorldEditor* WE = WorldEditor::Instance();
+
+void HookOpenWorld()
+{
+	WE->Refresh();
+
+	//orginal call before hooking
+	__OpenWorldModels();
+
+	return;
+}
 
 void __declspec(naked) HookRenderMuEditor()
 {
@@ -33,13 +45,6 @@ void __declspec(naked) HookRenderMuEditor()
 	}
 	else
 	{
-		static int OldWorld = -1;
-		if (OldWorld != World)
-		{
-			OldWorld = World;
-			WE->Refresh();
-		}
-
 		WE->UI();
 		WE->Edit();
 	}

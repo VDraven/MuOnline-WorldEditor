@@ -170,7 +170,6 @@ void WorldEditor::UI()
 		if (FreeMode)
 		{
 			ImGui::DragFloat("CameraDistance", &CameraDistance, 25.0f, 700.0f, 2000.0f);
-			ImGui::SameLine();
 			ImGui::DragFloat("CameraAngleZ", &CameraAngle[2], 5.0f, -360.0f, 360.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
 		}
 		
@@ -277,13 +276,13 @@ void WorldEditor::UI()
 
 void WorldEditor::UI_SaveWorld()
 {
-	EditFlag = WorldEditor::EDIT_NONE;
+	EditFlag = WorldEditor::EDIT_SAVING;
 
 	ImGui::InputInt("SaveWorldID", &SaveWorldConfig.nWorldID, 1, 10);
 	if (SaveWorldConfig.nWorldID <= 0) SaveWorldConfig.nWorldID = 1;
 
 	ImGui::Text("SaveDir: ");
-	ImGui::TextWrapped("%s\\World%d", PluginConfig.DirSave.c_str(), SaveWorldConfig.nWorldID);
+	ImGui::TextWrapped("%s\\World%d", Plugin.DirSave.c_str(), SaveWorldConfig.nWorldID);
 
 	ImGui::Combo("AttributeType", (int*)&SaveWorldConfig.SaveTerrainAttributeType, "ATT_64K\0ATT_128K\0\0");
 	ImGui::Combo("HeightType", (int*)&SaveWorldConfig.SaveTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
@@ -293,7 +292,7 @@ void WorldEditor::UI_SaveWorld()
 	bool cooling_down = (GetTickCount() - LastSaved) < 5000;
 	if (cooling_down)
 	{
-		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "The world has been saved to \"%s\\World%d\"", PluginConfig.DirSave.c_str(), SaveWorldConfig.nWorldID);
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "The world has been saved to \"%s\\World%d\"", Plugin.DirSave.c_str(), SaveWorldConfig.nWorldID);
 	}
 	if (!cooling_down && ImGui::Button("Save"))
 	{
@@ -435,6 +434,15 @@ void WorldEditor::UI_EditObject()
 				ImGui::DragFloat3("Light", PickObject->Light, 0.05f, 0.0f, 1.0f, "%.2f");
 			}
 
+			if (SaveWorldConfig.SaveObjectsType >= 4)
+			{
+				static int CurrentAction = 0;
+				CurrentAction = PickObject->CurrentAction;
+				ImGui::DragInt("Action", &CurrentAction, 1.0f, 0, 1000);
+				PickObject->CurrentAction = CurrentAction;
+
+				ImGui::InputFloat("AnimFrame", &PickObject->AnimationFrame, 0.0f, 0.0f, "%.1f", ImGuiInputTextFlags_ReadOnly);
+			}
 		}
 		else
 		{
@@ -505,91 +513,91 @@ void WorldEditor::UI_EditFlag_1()
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("External"))
+		if (Extension.Active)
 		{
-			if (ImGui::BeginListBox("", ImVec2(-FLT_MIN, 4 * 64.0f)))
+			if (ImGui::BeginTabItem("Ext"))
 			{
-				int table_flag = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders;
-				if (ImGui::BeginTable("", 3, table_flag))
+				if (ImGui::BeginListBox("", ImVec2(-FLT_MIN, 4 * 64.0f)))
 				{
-					for(auto it = ExternalData.Tiles.begin(); it != ExternalData.Tiles.end(); it++)
+					int table_flag = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders;
+					if (ImGui::BeginTable("", 3, table_flag))
 					{
-						GLuint id = it->second;
-						BITMAP_t* ext_bitmap = Bitmaps.GetTexture(id);
-						if (ext_bitmap->BitmapIndex)
+						for (auto it = Extension.Tiles.begin(); it != Extension.Tiles.end(); it++)
 						{
-							ImGui::TableNextRow();
-
-							ImGui::TableNextColumn();
-							ImGui::Image((void*)ext_bitmap->TextureNumber, ImVec2(64.0f, 64.0f));
-
-							ImGui::TableNextColumn();
-							static GLuint select_ext;
-							if (ImGui::Selectable(ext_bitmap->FileName, select_ext == id, 0, ImVec2(0.0f, 64.0f)))
-								select_ext = id;
-
-							ImGui::TableNextColumn();
-
-							if (select_ext != id) continue;
-
-							bool is_imported = false;
-							bool has_empty_slot = false;
-							for (GLuint i = 0; i < 31; i++)
+							GLuint id = it->second;
+							BITMAP_t* ext_bitmap = Bitmaps.GetTexture(id);
+							if (ext_bitmap->BitmapIndex)
 							{
-								BITMAP_t* bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
-								if (!bitmap->BitmapIndex)
-								{
-									has_empty_slot = true;
-								}
-								else if (bitmap->BitmapIndex == ext_bitmap->BitmapIndex)
-								{
-									is_imported = true;
-									ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Imported (%d)", i);
-									break;
-								}
-							}
-							
-							if (!is_imported && !has_empty_slot)
-							{
-								ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f) ,"No empty slot");
-							}
+								ImGui::TableNextRow();
 
-							if(!is_imported && has_empty_slot)
-							{
-								if (ImGui::Button("Import", ImVec2(0.0f, 64.0f)))
+								ImGui::TableNextColumn();
+								ImGui::Image((void*)ext_bitmap->TextureNumber, ImVec2(64.0f, 64.0f));
+
+								ImGui::TableNextColumn();
+								static GLuint select_ext;
+								if (ImGui::Selectable(ext_bitmap->FileName, select_ext == id, 0, ImVec2(0.0f, 64.0f)))
+									select_ext = id;
+
+								ImGui::TableNextColumn();
+
+								if (select_ext != id) continue;
+
+								bool is_imported = false;
+								bool has_empty_slot = false;
+								for (GLuint i = 0; i < 31; i++)
 								{
-									for (GLuint i = 0; i < 31; i++)
+									BITMAP_t* bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
+									if (bitmap->BitmapIndex == 0)
 									{
-										BITMAP_t* bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
-										if (!bitmap->BitmapIndex)
-										{	//found an empty slot
-											CBitmapCache__Add(CGlobalBitmap__m_BitmapCache, 30256 + i, ext_bitmap);
-											//BITMAP_t* found = NULL;
-											//if(CBitmapCache__Find(CGlobalBitmap__m_BitmapCache, 30256 + i, found) && found->BitmapIndex);
-											//{
-											//	ExternalData.AddTiles[id] = i;
-											//}
-											break;
+										has_empty_slot = true;
+									}
+									else if (bitmap->BitmapIndex == ext_bitmap->BitmapIndex)
+									{
+										is_imported = true;
+										ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Imported (%d)", i);
+										break;
+									}
+								}
+								if (!is_imported)
+								{
+									if (!has_empty_slot)
+									{
+										ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "No empty slot");
+									}
+									else if (ImGui::Button("Import", ImVec2(0.0f, 64.0f)))
+									{
+										for (GLuint i = 0; i < 31; i++)
+										{
+											BITMAP_t* bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
+											if (bitmap->BitmapIndex == 0)
+											{	//found an empty slot
+												CBitmapCache__Add(CGlobalBitmap__m_BitmapCache, 30256 + i, ext_bitmap);
+
+												//double check then add to imported list
+												bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
+												if (bitmap->BitmapIndex)
+													Extension.ImportedTiles.insert(std::make_pair(30256 + i, bitmap->FileName));
+
+												break;
+											}
 										}
 									}
 								}
 							}
 						}
 
+						ImGui::EndTable();
 					}
-					ImGui::EndTable();
+
+					ImGui::EndListBox();
 				}
-				ImGui::EndListBox();
+
+				ImGui::EndTabItem();
 			}
-
-
-			ImGui::EndTabItem();
 		}
-
-
+		
 		ImGui::EndTabBar();
 	}
-
 }
 
 void WorldEditor::UI_EditFlag_2_Local()
@@ -824,12 +832,12 @@ void WorldEditor::UI_EditFlag_3()
 	constexpr ImGuiColorEditFlags FLAGS = ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueWheel;
 
 #define RADIO_BUTTON_TW(TW) RADIO_BUTTON_TW_COLOR(TW, 0.0f, 1.0f, 1.0f)
-#define RADIO_BUTTON_TW_COLOR(TW, R, G, B)								\
-	if (ImGui::RadioButton(#TW, SelectWallType == TW)) SelectWallType = TW;		\
-	static vec4_t COLOR_##TW = {R, G, B, 0.3f};							\
+#define RADIO_BUTTON_TW_COLOR(TW, R, G, B)									\
+	if (ImGui::RadioButton(#TW, SelectWallType == TW)) SelectWallType = TW;	\
+	static vec4_t COLOR_##TW = {R, G, B, 0.3f};								\
 	if (SelectWallType == TW) {												\
-		ImGui::SameLine();												\
-		ImGui::ColorEdit4("", COLOR_##TW, FLAGS);						\
+		ImGui::SameLine();													\
+		ImGui::ColorEdit4("", COLOR_##TW, FLAGS);							\
 		SelectWallColor[0] = COLOR_##TW[0];									\
 		SelectWallColor[1] = COLOR_##TW[1];									\
 		SelectWallColor[2] = COLOR_##TW[2];									\

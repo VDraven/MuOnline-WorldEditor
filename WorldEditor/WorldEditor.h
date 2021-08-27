@@ -54,6 +54,7 @@ private:
 	void SaveTerrainMapping(const char*, const char*, int);
 	void SaveTerrainAttribute(const char*, const char*, int);
 	void SaveObjects(const char*, const char*, int);
+	void SaveNaviMap(const char*, const char*);
 
 	LRESULT WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
@@ -61,14 +62,15 @@ private:
 	friend void HookRenderMuEditor();
 	friend void HookRenderTerrainTile(float, float, int, int, float, int, bool);
 	friend void HookOpenObj();
+	friend void HookOpenWorld();
 
 	OBJECT* CollisionDetectObjects();
 	bool CollisionDetectLineToMesh(BMD*, vec3_t, vec3_t, bool, int, int);
 	void AddTerrainHeight(float, float, float, int, float*);
 	void SetTerrainHeight(float, float, float, int, float*);
-	void SetTerrainLight(float xf, float yf, vec3_t Light, int Range, vec3_t* Buffer);
-	void SetTerrainWall(float xf, float yf, int Range, bool set);
-	bool RenderTerrainTile(float xf, float yf, int xi, int yi, float lodf, int lodi, bool Flag);
+	void SetTerrainLight(float, float, vec3_t, int, vec3_t*);
+	void SetTerrainWall(float, float, int, bool);
+	bool RenderTerrainTile(float, float, int, int, float, int, bool);
 	void RenderPreview3D(int, float, float, float, float, int v = 0); 
 
 private:
@@ -77,16 +79,19 @@ private:
 	{
 		bool Active;
 		std::string DirSave;
-	} PluginConfig;
+	} Plugin;
 
 	struct 
 	{
+		bool Active;
+
 		std::string DirTile;
 		std::map<std::string, GLuint> Tiles;
+		std::map<int, std::string> ImportedTiles;
 		
 		std::string DirObject;
 		std::map<std::string, DWORD> Objects;
-	} ExternalData;
+	} Extension;
 
 	struct
 	{
@@ -143,7 +148,8 @@ private:
 		EDIT_HEIGHT = 4,
 		EDIT_LIGHT = 5,
 		EDIT_SOUND = 6,
-		EDIT_MONSTER = 7
+		EDIT_MONSTER = 7,
+		EDIT_SAVING
 	};
 
 	

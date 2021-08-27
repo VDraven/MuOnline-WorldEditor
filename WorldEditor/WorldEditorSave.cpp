@@ -4,9 +4,8 @@
 #include "Core/MAP.h"
 #include "Core/ATT.h"
 #include "Core/OBJ.h"
-
-void WriteBitmap1(const char* szFileName, std::vector<BYTE>& buffer);
-void WriteBitmap3(const char* szFileName, std::vector<BYTE>& buffer);
+#include "Core/OZP.h"
+#include "ZzzTexture.h"
 
 void WorldEditor::SaveWorld()
 {
@@ -14,32 +13,45 @@ void WorldEditor::SaveWorld()
 	char szWorldName[32];
 	char szFileName[256];
 	char szEncFileName[256];
-	const char* szDirSave = PluginConfig.DirSave.c_str();
+	const char* szDirSave = Plugin.DirSave.c_str();
 	sprintf(szWorldName, "World%d", nWorldID);
 
-	sprintf(szFileName, "%s\\%s\\Decrypted\\TerrainLight.bmp", szDirSave, szWorldName);
+	sprintf(szFileName, "%s\\Decrypted\\%s\\TerrainLight.bmp", szDirSave, szWorldName);
 	sprintf(szEncFileName, "%s\\%s\\TerrainLight.ozb", szDirSave, szWorldName);
 	SaveTerrainLight(szFileName, szEncFileName);
 
-	sprintf(szFileName, "%s\\%s\\Decrypted\\TerrainHeight.bmp", szDirSave, szWorldName);
+	sprintf(szFileName, "%s\\Decrypted\\%s\\TerrainHeight.bmp", szDirSave, szWorldName);
 	sprintf(szEncFileName, "%s\\%s\\TerrainHeight.ozb", szDirSave, szWorldName);
 	SaveTerrainHeight(szFileName, szEncFileName);
 
-	sprintf(szFileName, "%s\\%s\\Decrypted\\Terrain%d.pam", szDirSave, szWorldName, nWorldID);
+	sprintf(szFileName, "%s\\Decrypted\\%s\\Terrain%d.pam", szDirSave, szWorldName, nWorldID);
 	sprintf(szEncFileName, "%s\\%s\\EncTerrain%d.map", szDirSave, szWorldName, nWorldID);
 	SaveTerrainMapping(szFileName, szEncFileName, nWorldID);
 
-	sprintf(szFileName, "%s\\%s\\Decrypted\\Terrain%d.tta", szDirSave, szWorldName, nWorldID);
+	sprintf(szFileName, "%s\\Decrypted\\%s\\Terrain%d.tta", szDirSave, szWorldName, nWorldID);
 	sprintf(szEncFileName, "%s\\%s\\EncTerrain%d.att", szDirSave, szWorldName, nWorldID);
 	SaveTerrainAttribute(szFileName, szEncFileName, nWorldID);
 
-	sprintf(szFileName, "%s\\%s\\Decrypted\\Terrain%d.jbo", szDirSave, szWorldName, nWorldID);
+	sprintf(szFileName, "%s\\Decrypted\\%s\\Terrain%d.jbo", szDirSave, szWorldName, nWorldID);
 	sprintf(szEncFileName, "%s\\%s\\EncTerrain%d.obj", szDirSave, szWorldName, nWorldID);
 	SaveObjects(szFileName, szEncFileName, nWorldID);
+
+	if (nWorldID < 10)
+	{
+		sprintf(szFileName, "%s\\Decrypted\\%s\\Navimap0%d.png", szDirSave, szWorldName, nWorldID);
+		sprintf(szEncFileName, "%s\\%s\\Navimap0%d.ozp", szDirSave, szWorldName, nWorldID);
+	}
+	else
+	{
+		sprintf(szFileName, "%s\\Decrypted\\%s\\Navimap%d.png", szDirSave, szWorldName, nWorldID);
+		sprintf(szEncFileName, "%s\\%s\\Navimap%d.ozp", szDirSave, szWorldName, nWorldID);
+	}
+	SaveNaviMap(szFileName, szEncFileName);
 }
 
 void WorldEditor::SaveTerrainLight(const char* szFileName, const char* szEncFileName)
 {
+	if (!szFileName) return;
 	CreateParentDir(szFileName);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
@@ -53,9 +65,9 @@ void WorldEditor::SaveTerrainLight(const char* szFileName, const char* szEncFile
 		buffer[3 * i + 2] = (BYTE)Clamp((int)(pLight[3 * i + 0] * 255.f), 0, 255);
 	}
 	
-	WriteBitmap3(szFileName, buffer);
+	WriteMapBitmap3(szFileName, buffer);
 
-	if (fs::exists(szFileName))
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(OZB)->Pack(szFileName, szEncFileName);
@@ -67,6 +79,7 @@ void WorldEditor::SaveTerrainHeight(const char* szFileName, const char* szEncFil
 	if(SaveWorldConfig.SaveTerrainHeightType == OZB_TYPE::OZB_192K)
 		return SaveTerrainHeightNew(szFileName, szEncFileName);
 
+	if (!szFileName) return;
 	CreateParentDir(szFileName);
 
 	constexpr size_t BITS_SIZE = TERRAIN_SIZE * TERRAIN_SIZE;
@@ -77,9 +90,9 @@ void WorldEditor::SaveTerrainHeight(const char* szFileName, const char* szEncFil
 		buffer[i] = (BYTE)Clamp(height, 0, 255);
 	}
 
-	WriteBitmap1(szFileName, buffer);
+	WriteMapBitmap1(szFileName, buffer);
 
-	if (fs::exists(szFileName)) 
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(OZB)->Pack(szFileName, szEncFileName);
@@ -88,6 +101,7 @@ void WorldEditor::SaveTerrainHeight(const char* szFileName, const char* szEncFil
 
 void WorldEditor::SaveTerrainHeightNew(const char* szFileName, const char* szEncFileName)
 {
+	if (!szFileName) return;
 	CreateParentDir(szFileName);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
@@ -102,9 +116,9 @@ void WorldEditor::SaveTerrainHeightNew(const char* szFileName, const char* szEnc
 		buffer[3 * i + 2] = (BYTE) (height & 0x000000FF);
 	}
 
-	WriteBitmap3(szFileName, buffer);
+	WriteMapBitmap3(szFileName, buffer);
 
-	if (fs::exists(szFileName))
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(OZB)->Pack(szFileName, szEncFileName);
@@ -113,7 +127,9 @@ void WorldEditor::SaveTerrainHeightNew(const char* szFileName, const char* szEnc
 
 void WorldEditor::SaveTerrainMapping(const char* szFileName, const char* szEncFileName, int iMapNumber)
 {
+	if (!szFileName) return;
 	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
 
 	BYTE Version = 0;
 	fwrite(&Version, 1, 1, fp);
@@ -127,7 +143,7 @@ void WorldEditor::SaveTerrainMapping(const char* szFileName, const char* szEncFi
 	}
 	fclose(fp);
 
-	if (fs::exists(szFileName))
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(MAP)->Pack(szFileName, szEncFileName);
@@ -136,11 +152,13 @@ void WorldEditor::SaveTerrainMapping(const char* szFileName, const char* szEncFi
 
 void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEncFileName, int iMapNumber)
 {
+	if (!szFileName) return;
 	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
 
 	BYTE Version = 0;
-	BYTE Width = 255;
-	BYTE Height = 255;
+	BYTE Width = 255;		//Webzen's troll ??? 256 instead (width/height is not index)
+	BYTE Height = 255;		//Don't change to 256, client will check these values
 	fwrite(&Version, 1, 1, fp);
 	fwrite(&iMapNumber, 1, 1, fp);
 	fwrite(&Width, 1, 1, fp);
@@ -149,12 +167,12 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
 	if (SaveWorldConfig.SaveTerrainAttributeType == ATT_TYPE::ATT_64K)
 	{
-		std::vector<BYTE> buf(SZ);
+		std::vector<BYTE> buffer(SZ);
 		for (size_t i = 0; i < SZ; i++)
 		{
-			buf[i] = (BYTE)(TerrainWall[i] & 0xFF);
+			buffer[i] = (BYTE)(TerrainWall[i] & 0xFF);
 		}
-		fwrite(buf.data(), SZ, 1, fp);
+		fwrite(buffer.data(), SZ, 1, fp);
 	}
 	else
 	{
@@ -163,7 +181,7 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 
 	fclose(fp);
 
-	if (fs::exists(szFileName))
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(ATT)->Pack(szFileName, szEncFileName);
@@ -172,7 +190,9 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 
 void WorldEditor::SaveObjects(const char* szFileName, const char* szEncFileName, int iMapNumber)
 {
+	if (!szFileName) return;
 	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
 
 	short ObjectCount = 0;
 	BYTE Version = SaveWorldConfig.SaveObjectsType;
@@ -227,115 +247,117 @@ void WorldEditor::SaveObjects(const char* szFileName, const char* szEncFileName,
 
 	fclose(fp);
 
-	if (fs::exists(szFileName))
+	if (fs::exists(szFileName) && szEncFileName)
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(OBJ)->Pack(szFileName, szEncFileName);
 	}
 }
 
-//FIXME: I feel wrong with the +2 (TerrainHeight.bmp 64K)
-void WriteBitmap1(const char* szFileName, std::vector<BYTE>& buffer)
+#define SET_COLOR_RGBA(a, b) a[0] = b[0];  a[1] = b[1]; a[2] = b[2]; a[3] = b[3];
+void DrawBorderTW(WORD mask, WORD w, const BYTE* color, BYTE* pixel_a, BYTE* pixel_b)
 {
-	constexpr size_t BITS_SIZE = TERRAIN_SIZE * TERRAIN_SIZE;
-	if (buffer.size() != BITS_SIZE) return;
+	bool is_border = false;
+	if(w == 0xFFFF)
+		is_border = true;
+	else if (mask == TW_NONE && w != TW_NONE)
+		is_border = true;
+	else if (mask == TW_SAFEZONE && (w & mask) != TW_SAFEZONE)
+		is_border = true;
 
-	constexpr size_t HEADER_SIZE =	// 1078
-		sizeof(BITMAPFILEHEADER)
-		+ sizeof(BITMAPINFOHEADER)
-		+ 0x400;	//bmiColors
-
-	constexpr size_t FILE_SIZE =	// 66616
-		HEADER_SIZE
-		+ 2							// +2 ??? Webzen's mess
-		+ BITS_SIZE;
-
-	constexpr BITMAPFILEHEADER header
+	if (is_border)
 	{
-		0x4D42,			//bfType		//"BM"
-		FILE_SIZE,		//bfSize
-		0,				//bfReserved1
-		0,				//bfReserved2
-		HEADER_SIZE		//bfOffBits
-	};
+		SET_COLOR_RGBA(pixel_a, color);
+		SET_COLOR_RGBA(pixel_b, color);
+		pixel_a[3] = pixel_b[3] = 255;
+	}
+}
 
-	constexpr BITMAPINFOHEADER bmiHeader
+void WorldEditor::SaveNaviMap(const char* szFileName, const char* szEncFileName)
+{
+	if (!szFileName) return;
+
+	constexpr BYTE COLOR_NONE[4] { 222 , 252 , 254 , 117 };
+	constexpr BYTE COLOR_SAFE[4] { 192 , 254 , 243 , 118 };
+
+	constexpr size_t SZ = 512 * 512;
+
+	std::vector<BYTE> buffer;
+	buffer.resize(4 * SZ, 0);
+
+	typedef BYTE QuadRow[512][4];
+	QuadRow* data = (QuadRow*) buffer.data();
+
+	for (size_t i = 0; i < 256; i++)
 	{
-		sizeof(BITMAPINFOHEADER),	//biSize
-		256,						//biWidth
-		256,						//biHeight
-		1,							//biPlanes
-		8,							//biBitCount		// 1 BYTE
-		BI_RGB,						//biCompression		// 0 (no compression)
-		0,							//biSizeImage		// 0 (for BI_RGB)
-		2834,						//biXPelsPerMeter	// not important 
-		2834,						//biYPelsPerMeter	// (72 DPI × 39.3701 inches per meter yields 2834.6472)
-		0,							//biClrUsed
-		0							//biClrImportant
-	};
-
-	//create colors data only once with static magic
-	static std::vector<RGBQUAD> bmiColors;
-	if (bmiColors.empty())
-	{	//Create ref colors table (biBitCount = 8). 
-		bmiColors.resize(256);
-		for (int i = 0; i < 256; i++)
+		for (size_t j = 0; j < 256; j++) 
 		{
-			bmiColors[i].rgbRed = bmiColors[i].rgbGreen = bmiColors[i].rgbBlue = (BYTE)i;
-			bmiColors[i].rgbReserved = 0;
+			BYTE* pixel_1 = (BYTE*)&data[2 * i][2 * j];
+			BYTE* pixel_2 = (BYTE*)&data[2 * i][2 * j + 1];
+			BYTE* pixel_3 = (BYTE*)&data[2 * i + 1][2 * j];
+			BYTE* pixel_4 = (BYTE*)&data[2 * i + 1][2 * j + 1];
+
+			WORD w = TerrainWall[i * TERRAIN_SIZE + j];
+			WORD mask = 0;
+			const BYTE* color = NULL;
+
+			if (w == TW_NONE) 
+			{
+				color = COLOR_NONE;
+				mask = TW_NONE;
+			}
+			else if (w & TW_SAFEZONE)
+			{
+				color = COLOR_SAFE;
+				mask = TW_SAFEZONE;
+			}
+			if (color == NULL) continue;
+
+			pixel_1[3] = pixel_2[3] = 59;
+			SET_COLOR_RGBA(pixel_3, color);
+			SET_COLOR_RGBA(pixel_4, color);
+
+			w = (i + 1 <= 255) ? TerrainWall[(i + 1) * TERRAIN_SIZE + j] : 0xFFFF;
+			DrawBorderTW(mask, w, color, pixel_3, pixel_4);
+
+			w = (i - 1 >= 0) ? TerrainWall[(i - 1) * TERRAIN_SIZE + j] : 0xFFFF;
+			DrawBorderTW(mask, w, color, pixel_1, pixel_2);
+
+			w = (j + 1 <= 255) ? TerrainWall[i * TERRAIN_SIZE + (j + 1)] : 0xFFFF;
+			DrawBorderTW(mask, w, color, pixel_2, pixel_4);
+
+			w = (j - 1 >= 0) ? TerrainWall[i * TERRAIN_SIZE + (j - 1)] : 0xFFFF;
+			DrawBorderTW(mask, w, color, pixel_1, pixel_3);
 		}
 	}
 
-	FILE* fp = fopen(szFileName, "wb");
-	fwrite(&header, sizeof(BITMAPFILEHEADER), 1, fp);
-	fwrite(&bmiHeader, sizeof(BITMAPINFOHEADER), 1, fp);
-	fwrite(bmiColors.data(), bmiColors.size() * sizeof(RGBQUAD), 1, fp);
-	fwrite(buffer.data(), 2, 1, fp);
-	fwrite(buffer.data(), buffer.size(), 1, fp);
-	fclose(fp);
+	//Shadow
+	for (size_t i = 1; i < 512; i++)
+	{
+		for (size_t j = 0; j < 511; j++)
+		{
+			BYTE* pixel = (BYTE*)&data[i][j];
+			BYTE* sd_pixel = (BYTE*)&data[i - 1][j + 1];
+			if (pixel[3] == 255 && sd_pixel[3] != 255)
+			{
+				float alpha_sd = 0.8f;
+				float alpha_bg = sd_pixel[3] / 255.0f;
+				float alpha = alpha_bg + (1.0f - alpha_bg) * alpha_sd;
+
+				sd_pixel[0] = (1 - alpha) * sd_pixel[0];
+				sd_pixel[1] = (1 - alpha) * sd_pixel[1];
+				sd_pixel[2] = (1 - alpha) * sd_pixel[2];
+				sd_pixel[3] = alpha * 255;
+			}
+		}
+	}
+
+	WriteMapPng(szFileName, buffer);
+
+	if (fs::exists(szFileName) && szEncFileName)
+	{
+		CreateParentDir(szEncFileName);
+		sInstance(OZP)->Pack(szFileName, szEncFileName);
+	}
 }
 
-
-void WriteBitmap3(const char* szFileName, std::vector<BYTE>& buffer)
-{
-	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
-	constexpr size_t BITS_SIZE = SZ * 3;
-	if (buffer.size() != BITS_SIZE) return;
-
-	constexpr size_t HEADER_SIZE =	// 54
-		sizeof(BITMAPFILEHEADER)
-		+ sizeof(BITMAPINFOHEADER);
-	constexpr size_t FILE_SIZE =	// 196662
-		HEADER_SIZE
-		+ BITS_SIZE;
-
-	constexpr BITMAPFILEHEADER header
-	{
-		0x4D42,			//bfType		//"BM"
-		FILE_SIZE,		//bfSize
-		0,				//bfReserved1
-		0,				//bfReserved2
-		HEADER_SIZE		//bfOffBits
-	};
-
-	constexpr BITMAPINFOHEADER bmiHeader
-	{
-		sizeof(BITMAPINFOHEADER),	//biSize
-		256,						//biWidth
-		256,						//biHeight
-		1,							//biPlanes
-		24,							//biBitCount		// 3 BYTES
-		BI_RGB,						//biCompression		// 0 (no compression)
-		0,							//biSizeImage		// 0 (for BI_RGB)
-		0,							//biXPelsPerMeter	// not important 
-		0,							//biYPelsPerMeter
-		0,							//biClrUsed
-		0							//biClrImportant
-	};
-
-	FILE* fp = fopen(szFileName, "wb");
-	fwrite(&header, sizeof(BITMAPFILEHEADER), 1, fp);
-	fwrite(&bmiHeader, sizeof(BITMAPINFOHEADER), 1, fp);
-	fwrite(buffer.data(), buffer.size(), 1, fp);
-	fclose(fp);
-}

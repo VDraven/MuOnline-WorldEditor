@@ -13,5 +13,8 @@ extern void SaveImage(int HeaderSize, char* Ext, char* filename, BYTE* PakBuffer
 bool LoadBitmap(const char* szFileName, GLuint uiTextureIndex, GLuint uiFilter = GL_NEAREST, GLuint uiWrapMode = GL_CLAMP, bool bCheck = true, bool bFullPath = false);
 void DeleteBitmap(GLuint uiTextureIndex, bool bForce = false);
 
+void WriteMapBitmap1(const char* szFileName, std::vector<BYTE>& buffer);
+void WriteMapBitmap3(const char* szFileName, std::vector<BYTE>& buffer);
+void WriteMapPng(const char* szFileName, std::vector<BYTE>& buffer);
 #endif// __ZZZTEXTURE_H__
 #pragma once

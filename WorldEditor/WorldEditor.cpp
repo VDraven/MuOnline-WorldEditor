@@ -1,5 +1,7 @@
 #include "WorldEditor.h"
 #include "Core/ZzzMathLib.h"
+#include "Core/MuCrypto.h"
+
 void WorldEditor::Init()
 {
 	SetHooks();
@@ -19,26 +21,37 @@ void WorldEditor::Refresh()
 	Frame3D.Angle[1] = 0.0f;
 	Frame3D.Angle[2] = 0.0f;
 
-	static BITMAP_t m_NullBitmap;
+	//tiles cache clean (including ext tiles)
 	for (int i = 0; i < 31; i++)
-	{
-		BITMAP_t* bitmap = CGlobalBitmap__GetTexture(&_Bitmaps, 30256 + i);
-
-		if (!bitmap->BitmapIndex) continue;
-
-		if (bitmap->BitmapIndex < 30256 || bitmap->BitmapIndex > 30256 + 30)
-		{
-			CBitmapCache__Add(CGlobalBitmap__m_BitmapCache, 30256 + i, &m_NullBitmap);
-		}
-	}
+		CBitmapCache__Remove(CGlobalBitmap__m_BitmapCache, 30256 + i);
+	Extension.ImportedTiles.clear();
 
 	SaveWorldConfig.nWorld = World;
 	SaveWorldConfig.nWorldID = __GetWorldID(World);
+
+	//Get Save World Types
 	if (__IsNewTerrainHeightWorld(World))
 		SaveWorldConfig.SaveTerrainHeightType = OZB_TYPE::OZB_192K;
 	else
 		SaveWorldConfig.SaveTerrainHeightType = OZB_TYPE::OZB_64K;
 	SaveWorldConfig.SaveTerrainAttributeType = ATT_TYPE::ATT_128K;
+
+	char szFileName[256];
+	sprintf(szFileName, "Data\\World%d\\EncTerrain%d.obj", SaveWorldConfig.nWorldID, SaveWorldConfig.nWorldID);
+
+	FILE* fp = fopen(szFileName, "rb");
+	if (fp)
+	{
+		// We only need to read the first byte (skip size == 0 check)
+		BYTE version;
+		fread(&version, 1u, 1, fp);
+		//MapFileDecrypt (for 1 byte)
+		version ^= 0xD1;
+		version -= 0x5E;
+
+		SaveWorldConfig.SaveObjectsType = (OBJ_TYPE)version;
+		fclose(fp);
+	}
 }
 
 void WorldEditor::LoadPluginConfig()
@@ -46,29 +59,36 @@ void WorldEditor::LoadPluginConfig()
 	char szNull[] = "";
 	char szBuffer[1024];
 
-	PluginConfig.Active = GetPrivateProfileIntA("WorldEditor", "Active", 0, "Plugins\\Config.ini");
+	Plugin.Active = GetPrivateProfileIntA("WorldEditor", "Active", 0, "Plugins\\Config.ini");
 
 	GetPrivateProfileStringA("WorldEditor", "DirSave", szNull, szBuffer, 1024, "Plugins\\Config.ini");
-	PluginConfig.DirSave = std::string(szBuffer);
+	Plugin.DirSave = std::string(szBuffer);
 
-	GetPrivateProfileStringA("WorldEditor", "DirTile", szNull, szBuffer, 1024, "Plugins\\Config.ini");
-	ExternalData.DirTile = std::string(szBuffer);
+	//================================================
 
-	GetPrivateProfileStringA("WorldEditor", "DirObject", szNull, szBuffer, 1024, "Plugins\\Config.ini");
-	ExternalData.DirObject = std::string(szBuffer);
+	Extension.Active = GetPrivateProfileIntA("WorldExtension", "Active", 0, "Plugins\\Config.ini");
+
+	GetPrivateProfileStringA("WorldExtension", "DirTile", szNull, szBuffer, 1024, "Plugins\\Config.ini");
+	Extension.DirTile = std::string(szBuffer);
+
+	GetPrivateProfileStringA("WorldExtension", "DirObject", szNull, szBuffer, 1024, "Plugins\\Config.ini");
+	Extension.DirObject = std::string(szBuffer);
 }
 
 void WorldEditor::LoadExtData()
 {
-	LoadExtTile();
-	LoadExtObject();
+	if (Extension.Active)
+	{
+		LoadExtTile();
+		LoadExtObject();
+	}
 }
 
 void WorldEditor::LoadExtTile()
 {
-	if (ExternalData.DirTile.empty()) return;
+	if (Extension.DirTile.empty()) return;
 
-	fs::path pData(ExternalData.DirTile);
+	fs::path pData(Extension.DirTile);
 	pData.append("Tiles.data");
 	if (fs::exists(pData))
 	{
@@ -90,10 +110,11 @@ void WorldEditor::LoadExtTile()
 				std::string filename(szBuff);
 				//ToLowerCaseString(filename);
 
-				if (ExternalData.Tiles.find(filename) != ExternalData.Tiles.end()) continue;
+				if (Extension.Tiles.find(filename) != Extension.Tiles.end()) continue;
 
-				ExternalData.Tiles[filename] = index;
-				LoadBitmap(filename.c_str(), index, GL_NEAREST, GL_REPEAT, false, true);
+				Extension.Tiles[filename] = index;
+				//LoadBitmap(filename.c_str(), index, GL_NEAREST, GL_REPEAT, false, true);
+				Bitmaps.LoadImage(index, filename.c_str(), GL_NEAREST, GL_REPEAT);
 			}
 			is.close();
 		}
@@ -102,7 +123,7 @@ void WorldEditor::LoadExtTile()
 	std::ofstream os(pData, std::ofstream::app);
 	if (os.is_open())
 	{
-		fs::path dir(ExternalData.DirTile);
+		fs::path dir(Extension.DirTile);
 		for (auto& p : fs::recursive_directory_iterator(dir))
 		{
 			if (p.is_regular_file())
@@ -118,11 +139,12 @@ void WorldEditor::LoadExtTile()
 					std::string filename = pFile.string();
 					//ToLowerCaseString(filename);
 
-					if (ExternalData.Tiles.find(filename) != ExternalData.Tiles.end()) continue;
+					if (Extension.Tiles.find(filename) != Extension.Tiles.end()) continue;
 
 					GLuint index = CGlobalBitmap::NextBitmapIndex;
-					ExternalData.Tiles[filename] = index;
-					LoadBitmap(filename.c_str(), index, GL_NEAREST, GL_REPEAT, false, true);
+					Extension.Tiles[filename] = index;
+					//LoadBitmap(filename.c_str(), index, GL_NEAREST, GL_REPEAT, false, true);
+					Bitmaps.LoadImage(index, filename.c_str(), GL_NEAREST, GL_REPEAT);
 					os << index << "\t" << filename << std::endl;
 				}
 			}
@@ -172,14 +194,14 @@ OBJECT * WorldEditor::CollisionDetectObjects()
 	return NULL;
 }
 
-bool WorldEditor::CollisionDetectLineToMesh(BMD * bmd, vec3_t Position, vec3_t Target, bool Collision, int Mesh, int Triangle)
+bool WorldEditor::CollisionDetectLineToMesh(BMD * bmd, vec3_t position, vec3_t target, bool collision, int mesh, int triangle)
 {
 
 	for (int i = 0; i < bmd->NumMeshs; ++i)
 	{
 		for (int j = 0; j < bmd->Meshs[i].NumTriangles; ++j)
 		{
-			if (i != Mesh || j != Triangle)
+			if (i != mesh || j != triangle)
 			{
 				short* v = bmd->Meshs[i].Triangles[j].VertexIndex;
 				
@@ -190,7 +212,7 @@ bool WorldEditor::CollisionDetectLineToMesh(BMD * bmd, vec3_t Position, vec3_t T
 
 				vec3_t normal;
 				__FaceNormalize(v1, v2, v3, normal);
-				if (__CollisionDetectLineToFace(Position, Target, bmd->Meshs[i].Triangles[j].Polygon, v1, v2, v3, v4, normal, Collision))
+				if (__CollisionDetectLineToFace(position, target, bmd->Meshs[i].Triangles[j].Polygon, v1, v2, v3, v4, normal, collision))
 					return true;
 			}
 		}
@@ -198,21 +220,21 @@ bool WorldEditor::CollisionDetectLineToMesh(BMD * bmd, vec3_t Position, vec3_t T
 	return false;
 }
 
-void WorldEditor::AddTerrainHeight(float xf, float yf, float Height, int Range, float* Buffer)
+void WorldEditor::AddTerrainHeight(float xf, float yf, float height, int range, float* buffer)
 {
-	float rf = (float)Range;
+	float rf = (float)range;
 
 	xf = xf / TERRAIN_SCALE;
 	yf = yf / TERRAIN_SCALE;
 	int   xi = (int)xf;
 	int   yi = (int)yf;
-	int   syi = yi - Range;
-	int   eyi = yi + Range;
+	int   syi = yi - range;
+	int   eyi = yi + range;
 	float syf = (float)(syi);
 	for (; syi <= eyi; syi++, syf += 1.f)
 	{
-		int   sxi = xi - Range;
-		int   exi = xi + Range;
+		int   sxi = xi - range;
+		int   exi = xi + range;
 		float sxf = (float)(sxi);
 		for (; sxi <= exi; sxi++, sxf += 1.f)
 		{
@@ -221,62 +243,62 @@ void WorldEditor::AddTerrainHeight(float xf, float yf, float Height, int Range, 
 			float lf = (rf - sqrtf(xd * xd + yd * yd)) / rf;
 			if (lf > 0.f)
 			{
-				Buffer[TERRAIN_INDEX_REPEAT(sxi, syi)] += Height * lf;
+				buffer[TERRAIN_INDEX_REPEAT(sxi, syi)] += height * lf;
 			}
 		}
 	}
 }
 
-void WorldEditor::SetTerrainHeight(float xf, float yf, float Height, int Range, float* Buffer)
+void WorldEditor::SetTerrainHeight(float xf, float yf, float height, int range, float* buffer)
 {
-	float rf = (float)Range;
+	float rf = (float)range;
 
 	xf = xf / TERRAIN_SCALE;
 	yf = yf / TERRAIN_SCALE;
 	int   xi = (int)xf;
 	int   yi = (int)yf;
-	int   syi = yi - Range;
-	int   eyi = yi + Range;
+	int   syi = yi - range;
+	int   eyi = yi + range;
 	float syf = (float)(syi);
 	for (; syi <= eyi; syi++, syf += 1.f)
 	{
-		int   sxi = xi - Range;
-		int   exi = xi + Range;
+		int   sxi = xi - range;
+		int   exi = xi + range;
 		float sxf = (float)(sxi);
 		for (; sxi <= exi; sxi++, sxf += 1.f)
 		{
 			float xd = xf - sxf;
 			float yd = yf - syf;
-			Buffer[TERRAIN_INDEX_REPEAT(sxi, syi)] = Height;
+			buffer[TERRAIN_INDEX_REPEAT(sxi, syi)] = height;
 		}
 	}
 }
 
-void WorldEditor::SetTerrainLight(float xf, float yf, vec3_t Light, int Range, vec3_t* Buffer)
+void WorldEditor::SetTerrainLight(float xf, float yf, vec3_t light, int range, vec3_t* buffer)
 {
-	float rf = (float)Range;
+	float rf = (float)range;
 
 	xf = (xf / TERRAIN_SCALE);
 	yf = (yf / TERRAIN_SCALE);
 	int   xi = (int)xf;
 	int   yi = (int)yf;
-	int   syi = yi - Range;
-	int   eyi = yi + Range;
+	int   syi = yi - range;
+	int   eyi = yi + range;
 	float syf = (float)(syi);
 	for (; syi <= eyi; syi++, syf += 1.f)
 	{
-		int   sxi = xi - Range;
-		int   exi = xi + Range;
+		int   sxi = xi - range;
+		int   exi = xi + range;
 		float sxf = (float)(sxi);
 		for (; sxi <= exi; sxi++, sxf += 1.f)
 		{
 			float xd = xf - sxf;
 			float yd = yf - syf;
 
-			float* b = &Buffer[TERRAIN_INDEX_REPEAT(sxi, syi)][0];
+			float* b = &buffer[TERRAIN_INDEX_REPEAT(sxi, syi)][0];
 			for (int i = 0; i < 3; i++)
 			{
-				b[i] = Light[i];
+				b[i] = light[i];
 				if (b[i] < 0.f) b[i] = 0.f;
 				else if (b[i] > 1.f) b[i] = 1.f;
 			}
@@ -285,21 +307,21 @@ void WorldEditor::SetTerrainLight(float xf, float yf, vec3_t Light, int Range, v
 	}
 }
 
-void WorldEditor::SetTerrainWall(float xf, float yf, int Range, bool set)
+void WorldEditor::SetTerrainWall(float xf, float yf, int range, bool set)
 {
-	float rf = (float)Range;
+	float rf = (float)range;
 
 	xf = (xf / TERRAIN_SCALE);
 	yf = (yf / TERRAIN_SCALE);
 	int   xi = (int)xf;
 	int   yi = (int)yf;
-	int   syi = yi - Range;
-	int   eyi = yi + Range;
+	int   syi = yi - range;
+	int   eyi = yi + range;
 	float syf = (float)(syi);
 	for (; syi <= eyi; syi++, syf += 1.f)
 	{
-		int   sxi = xi - Range;
-		int   exi = xi + Range;
+		int   sxi = xi - range;
+		int   exi = xi + range;
 		float sxf = (float)(sxi);
 		for (; sxi <= exi; sxi++, sxf += 1.f)
 		{
@@ -371,10 +393,10 @@ void WorldEditor::RenderPreview3D(int model_idx, float x, float y, float width, 
 }
 
 
-bool WorldEditor::RenderTerrainTile(float xf, float yf, int xi, int yi, float lodf, int lodi, bool Flag)
+bool WorldEditor::RenderTerrainTile(float xf, float yf, int xi, int yi, float lodf, int lodi, bool flag)
 {
 	TerrainIndex1 = TERRAIN_INDEX(xi, yi);
-	if ((TerrainWall[TerrainIndex1] & TW_NOGROUND) == TW_NOGROUND && !Flag) return false;
+	if ((TerrainWall[TerrainIndex1] & TW_NOGROUND) == TW_NOGROUND && !flag) return false;
 
 	TerrainIndex2 = TERRAIN_INDEX(xi + lodi, yi);
 	TerrainIndex3 = TERRAIN_INDEX(xi + lodi, yi + lodi);
@@ -393,7 +415,7 @@ bool WorldEditor::RenderTerrainTile(float xf, float yf, int xi, int yi, float lo
 	if ((TerrainWall[TerrainIndex3] & TW_HEIGHT) == TW_HEIGHT) TerrainVertex[2][2] = g_fSpecialHeight;
 	if ((TerrainWall[TerrainIndex4] & TW_HEIGHT) == TW_HEIGHT) TerrainVertex[3][2] = g_fSpecialHeight;
 
-	if (!Flag)
+	if (!flag)
 	{
 		__RenderTerrainFace(xf, yf, xi, yi);
 	}

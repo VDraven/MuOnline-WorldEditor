@@ -1,7 +1,6 @@
 #pragma once
 
 #define Vector(a,b,c,d) {(d)[0]=a;(d)[1]=b;(d)[2]=c;}
-
 typedef float vec_t;
 
 typedef vec_t vec2_t[2];

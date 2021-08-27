@@ -12,11 +12,14 @@
 #define OFFSET_JMP_BACK_FIX_BMD_NAME		0x005C2F84
 #define OFFSET_JMP_BACK_OPEN_OBJ			0x0060FE2A
 
+#define OFFSET_HOOK_OPEN_WORLD				0x00DFF2D9
+
 #define MODEL_PLAYER	1512
 
 #define World							(*(int*)				0x0181DF04)
 #define __GetWorldID					((int(_cdecl*)(int))	0x00E0B64A)
 #define __IsNewTerrainHeightWorld		((bool(_cdecl*)(int))	0x005FBD5C)
+#define __OpenWorldModels				((void(_cdecl*)())		0x00DF5791)
 
 #define CameraDistance					(*(float *)				0x015F1858)
 #define CameraAngle						(*(vec3_t *)			0x08CDCAB8)
@@ -61,10 +64,11 @@ typedef vec3_t VertexTransform_t[2][15000];
 #define ObjectBlock						((OBJECT_BLOCK*)		0x08CD0110)
 
 #define _Bitmaps						(*(CGlobalBitmap *)		0x09DABA78)
-#define CGlobalBitmap__GetTexture		((BITMAP_t*(__thiscall*)(CGlobalBitmap *, GLuint))		0x005796FC)
+#define CGlobalBitmap__GetTexture		((BITMAP_t*(__thiscall*)(CGlobalBitmap *, GLuint))	0x005796FC)
 #define CGlobalBitmap__m_BitmapCache	((void *)				(0x09DABA78 + 0x4C))
-#define CBitmapCache__Find				((bool(__thiscall*)(void *, GLuint, BITMAP_t*))	0x00578F1A)
-#define CBitmapCache__Add				((void(__thiscall*)(void *, GLuint, BITMAP_t*))	0x005787D7)
+#define CBitmapCache__Find				((bool(__thiscall*)(void *, GLuint, BITMAP_t*))		0x00578F1A)
+#define CBitmapCache__Add				((void(__thiscall*)(void *, GLuint, BITMAP_t*))		0x005787D7)
+#define CBitmapCache__Remove			((void(__thiscall*)(void *, GLuint))				0x0057894B)
 #define BMPHeader						((BYTE*)				0x086CDFA8)
 
 //void RenderBitmap(int Texture,float x,float y,float Width,float Height,float u,float v,float uWidth,float vHeight,bool Scale,bool StartScale,float Alpha)
@@ -139,11 +143,11 @@ enum TW
 #define	Hero							(*(CHARACTER**)		0x09DB106C)
 #define __CreateCharacter				((CHARACTER*(_cdecl*)(int, int, int, int, float))										0x00A6CDF2)
 #define __CreateMonster					((CHARACTER*(_cdecl*)(int, int, int, int, int))											0x00A6ED4C)
-#define ObjCreatePrepare_ctor			((ObjCreatePrepare*(__thiscall*)(ObjCreatePrepare*, int, vec3_t, vec3_t, float, bool, bool, bool))	0x0090C384)
+#define ObjCreatePrepare__ctor			((ObjCreatePrepare*(__thiscall*)(ObjCreatePrepare*, int, vec3_t, vec3_t, float, bool, bool, bool))	0x0090C384)
 #define __CreateObject					((OBJECT*(_cdecl*)(ObjCreatePrepare* ))													0x0060E651)
 #define __DeleteObject					((void(_cdecl*)(OBJECT*, OBJECT_BLOCK*))												0x0060F909)
-#define __DeleteCharacter					((void(_cdecl*)(int))																	0x00A6B088)
-#define OBJECT__DestroyModel					((void(__thiscall*)(OBJECT*, BYTE))														0x004FAEB3)
+#define __DeleteCharacter				((void(_cdecl*)(int))																	0x00A6B088)
+#define OBJECT__DestroyModel			((void(__thiscall*)(OBJECT*, BYTE))														0x004FAEB3)
 
 #define NpcNameLoader					(0x0A6A6AD8)
 #define NpcNameMap						(NpcNameLoader + 0x40)

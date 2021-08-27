@@ -8,6 +8,7 @@
 #include <setjmp.h>
 #include "ZzzTexture.h"
 #include "jpeg-6b\jpeglib.h"
+#include "libpng/lpng1637/png.h"
 
 #define SAFE_DELETE_ARRAY(p)  { if(p) { delete [] (p);     (p)=NULL; } }
 
@@ -222,7 +223,158 @@ bool LoadBitmap(const char* szFileName, GLuint uiTextureIndex, GLuint uiFilter, 
 
 	return Bitmaps.LoadImage(uiTextureIndex, szFullPath, uiFilter, uiWrapMode);
 }
+
 void DeleteBitmap(GLuint uiTextureIndex, bool bForce)
 {
 	Bitmaps.UnloadImage(uiTextureIndex, bForce);
+}
+
+void WriteMapPng(const char* szFileName, std::vector<BYTE>& buffer)
+{
+	if (buffer.size() != 4 * 512 * 512) return;
+
+	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
+
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png_ptr) return;
+
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr) return;
+
+	if (setjmp(png_jmpbuf(png_ptr))) return;
+	png_init_io(png_ptr, fp);
+
+	png_set_IHDR(png_ptr, info_ptr, 512, 512,
+		8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_text title_text;
+	title_text.compression = PNG_TEXT_COMPRESSION_NONE;
+	title_text.key = (char*)"Title";
+	title_text.text = (char*)szFileName;
+	png_set_text(png_ptr, info_ptr, &title_text, 1);
+
+	png_write_info(png_ptr, info_ptr);
+
+	for (int i = 0; i < 512; i++)
+	{
+		png_bytep row = &buffer[(511 - i) * 4 * 512];
+		png_write_row(png_ptr, row);
+	}
+
+	png_write_end(png_ptr, NULL);
+
+	if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+
+	fclose(fp);
+}
+
+//FIXME: I feel wrong with the +2 (TerrainHeight.bmp 64K)
+void WriteMapBitmap1(const char* szFileName, std::vector<BYTE>& buffer)
+{
+	constexpr size_t BITS_SIZE = 256 * 256;
+	if (buffer.size() != BITS_SIZE) return;
+
+	constexpr size_t HEADER_SIZE =	// 1078
+		sizeof(BITMAPFILEHEADER)
+		+ sizeof(BITMAPINFOHEADER)
+		+ 0x400;	//bmiColors
+
+	constexpr size_t FILE_SIZE =	// 66616
+		HEADER_SIZE
+		+ 2							// +2 ??? Webzen's mess
+		+ BITS_SIZE;
+
+	constexpr BITMAPFILEHEADER header
+	{
+		0x4D42,			//bfType		//"BM"
+		FILE_SIZE,		//bfSize
+		0,				//bfReserved1
+		0,				//bfReserved2
+		HEADER_SIZE		//bfOffBits
+	};
+
+	constexpr BITMAPINFOHEADER bmiHeader
+	{
+		sizeof(BITMAPINFOHEADER),	//biSize
+		256,						//biWidth
+		256,						//biHeight
+		1,							//biPlanes
+		8,							//biBitCount		// 1 BYTE
+		BI_RGB,						//biCompression		// 0 (no compression)
+		0,							//biSizeImage		// 0 (for BI_RGB)
+		2834,						//biXPelsPerMeter	// not important 
+		2834,						//biYPelsPerMeter	// (72 DPI × 39.3701 inches per meter yields 2834.6472)
+		0,							//biClrUsed
+		0							//biClrImportant
+	};
+
+	//create colors data only once with static magic
+	static std::vector<RGBQUAD> bmiColors;
+	if (bmiColors.empty())
+	{	//Create ref colors table (biBitCount = 8). 
+		bmiColors.resize(256);
+		for (int i = 0; i < 256; i++)
+		{
+			bmiColors[i].rgbRed = bmiColors[i].rgbGreen = bmiColors[i].rgbBlue = (BYTE)i;
+			bmiColors[i].rgbReserved = 0;
+		}
+	}
+
+	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
+	fwrite(&header, sizeof(BITMAPFILEHEADER), 1, fp);
+	fwrite(&bmiHeader, sizeof(BITMAPINFOHEADER), 1, fp);
+	fwrite(bmiColors.data(), bmiColors.size() * sizeof(RGBQUAD), 1, fp);
+	fwrite(buffer.data(), 2, 1, fp);
+	fwrite(buffer.data(), buffer.size(), 1, fp);
+	fclose(fp);
+}
+
+
+void WriteMapBitmap3(const char* szFileName, std::vector<BYTE>& buffer)
+{
+	constexpr size_t SZ = 256 * 256;
+	constexpr size_t BITS_SIZE = SZ * 3;
+	if (buffer.size() != BITS_SIZE) return;
+
+	constexpr size_t HEADER_SIZE =	// 54
+		sizeof(BITMAPFILEHEADER)
+		+ sizeof(BITMAPINFOHEADER);
+	constexpr size_t FILE_SIZE =	// 196662
+		HEADER_SIZE
+		+ BITS_SIZE;
+
+	constexpr BITMAPFILEHEADER header
+	{
+		0x4D42,			//bfType		//"BM"
+		FILE_SIZE,		//bfSize
+		0,				//bfReserved1
+		0,				//bfReserved2
+		HEADER_SIZE		//bfOffBits
+	};
+
+	constexpr BITMAPINFOHEADER bmiHeader
+	{
+		sizeof(BITMAPINFOHEADER),	//biSize
+		256,						//biWidth
+		256,						//biHeight
+		1,							//biPlanes
+		24,							//biBitCount		// 3 BYTES
+		BI_RGB,						//biCompression		// 0 (no compression)
+		0,							//biSizeImage		// 0 (for BI_RGB)
+		0,							//biXPelsPerMeter	// not important 
+		0,							//biYPelsPerMeter
+		0,							//biClrUsed
+		0							//biClrImportant
+	};
+
+	FILE* fp = fopen(szFileName, "wb");
+	if (!fp) return;
+	fwrite(&header, sizeof(BITMAPFILEHEADER), 1, fp);
+	fwrite(&bmiHeader, sizeof(BITMAPINFOHEADER), 1, fp);
+	fwrite(buffer.data(), buffer.size(), 1, fp);
+	fclose(fp);
 }
