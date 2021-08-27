@@ -248,6 +248,14 @@ void WorldEditor::UI()
 				ImGui::EndTabItem();
 			}
 
+			if (ImGui::BeginTabItem("LoadWorld"))
+			{
+				UI_LoadWorld();
+
+				ImGui::EndTabItem();
+			}
+
+
 			ImGui::EndTabBar();
 		}
 	}
@@ -276,10 +284,10 @@ void WorldEditor::UI()
 
 void WorldEditor::UI_SaveWorld()
 {
-	EditFlag = WorldEditor::EDIT_SAVING;
+	EditFlag = WorldEditor::EDIT_SAVE;
 
 	ImGui::InputInt("SaveWorldID", &SaveWorldConfig.nWorldID, 1, 10);
-	if (SaveWorldConfig.nWorldID <= 0) SaveWorldConfig.nWorldID = 1;
+	if (SaveWorldConfig.nWorldID < 1) SaveWorldConfig.nWorldID = 1;
 
 	ImGui::Text("SaveDir: ");
 	ImGui::TextWrapped("%s\\World%d", Plugin.DirSave.c_str(), SaveWorldConfig.nWorldID);
@@ -288,16 +296,48 @@ void WorldEditor::UI_SaveWorld()
 	ImGui::Combo("HeightType", (int*)&SaveWorldConfig.SaveTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
 	ImGui::Combo("ObjectsType", (int*)&SaveWorldConfig.SaveObjectsType, "OBJ_V0\0OBJ_V1\0OBJ_V2\0OBJ_V3\0\0");
 
-	static DWORD LastSaved = 0;
-	bool cooling_down = (GetTickCount() - LastSaved) < 5000;
+	static DWORD LastSave = 0;
+	bool cooling_down = (GetTickCount() - LastSave) < 5000;
 	if (cooling_down)
 	{
 		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "The world has been saved to \"%s\\World%d\"", Plugin.DirSave.c_str(), SaveWorldConfig.nWorldID);
 	}
 	if (!cooling_down && ImGui::Button("Save"))
 	{
-		LastSaved = GetTickCount();
+		LastSave = GetTickCount();
 		SaveWorld();
+	}
+}
+
+void WorldEditor::UI_LoadWorld()
+{
+	EditFlag = WorldEditor::EDIT_LOAD;
+
+	LoadWorldConfig.nWorldID = __GetWorldID(LoadWorldConfig.nWorld);
+	ImGui::Text("LoadWorldID: %d", LoadWorldConfig.nWorldID);
+
+	ImGui::InputInt("LoadWorld", &LoadWorldConfig.nWorld, 1, 10);
+	if (LoadWorldConfig.nWorld < 0) LoadWorldConfig.nWorld = 0;
+
+	ImGui::Text("LoadDirs: ");
+	ImGui::TextWrapped("Data\\World%d", LoadWorldConfig.nWorldID);
+	ImGui::TextWrapped("Data\\Object%d", LoadWorldConfig.nWorldID);
+
+	ImGui::Combo("HeightType", (int*)&LoadWorldConfig.LoadTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
+
+	static DWORD LastLoad = 0;
+	bool cooling_down = (GetTickCount() - LastLoad) < 5000;
+	if (cooling_down)
+	{
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "The world has been Loaded from \"Data\\World%d\"", LoadWorldConfig.nWorldID);
+	}
+	if (!cooling_down && ImGui::Button("Load"))
+	{
+		LastLoad = GetTickCount();
+		World = LoadWorldConfig.nWorld;
+		__OpenWorld(World); 
+		FreeMode = true;
+		SetFreeMode();
 	}
 }
 
@@ -879,9 +919,20 @@ void WorldEditor::UI_EditFlag_4()
 
 	if(ImGui::Checkbox("Flatten", &FlatLock))
 		FlatHeight = Height;
-	ImGui::SameLine();
-	if(FlatLock)
+	if (FlatLock)
+	{
+		ImGui::SameLine();
 		ImGui::DragFloat("", &FlatHeight);
+	}
+
+	static float AdjustBaseValue = 0.0f;
+	ImGui::DragFloat("AdjustBaseValue", &AdjustBaseValue, 1.0f, -10.0f, 10.0f, "%.0f");
+	if (ImGui::Button("AdjustBase"))
+	{
+		for (int i = 0; i < TERRAIN_SIZE * TERRAIN_SIZE; i++)
+			BackTerrainHeight[i] += AdjustBaseValue;
+	}
+
 }
 
 void WorldEditor::UI_EditFlag_5()

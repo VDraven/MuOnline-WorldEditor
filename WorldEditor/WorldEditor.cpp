@@ -30,7 +30,7 @@ void WorldEditor::Refresh()
 	SaveWorldConfig.nWorldID = __GetWorldID(World);
 
 	//Get Save World Types
-	if (__IsNewTerrainHeightWorld(World))
+	if (__IsTerrainHeightExtMap(World))
 		SaveWorldConfig.SaveTerrainHeightType = OZB_TYPE::OZB_192K;
 	else
 		SaveWorldConfig.SaveTerrainHeightType = OZB_TYPE::OZB_64K;

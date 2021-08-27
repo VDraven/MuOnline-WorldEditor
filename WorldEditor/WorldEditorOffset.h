@@ -13,12 +13,14 @@
 #define OFFSET_JMP_BACK_OPEN_OBJ			0x0060FE2A
 
 #define OFFSET_HOOK_OPEN_WORLD				0x00DFF2D9
+#define OFFSET_HOOK_TERRAIN_HEIGHT_EXT		0x00DFF753
 
 #define MODEL_PLAYER	1512
 
 #define World							(*(int*)				0x0181DF04)
 #define __GetWorldID					((int(_cdecl*)(int))	0x00E0B64A)
-#define __IsNewTerrainHeightWorld		((bool(_cdecl*)(int))	0x005FBD5C)
+#define __IsTerrainHeightExtMap			((bool(_cdecl*)(int))	0x005FBD5C)
+#define __OpenWorld						((void(_cdecl*)(int))	0x00DFF203)
 #define __OpenWorldModels				((void(_cdecl*)())		0x00DF5791)
 
 #define CameraDistance					(*(float *)				0x015F1858)

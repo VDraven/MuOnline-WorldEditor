@@ -31,6 +31,7 @@ private:
 	void InitUI();
 	void UI();
 	void UI_SaveWorld();
+	void UI_LoadWorld();
 	void UI_EditObject();
 	void UI_EditFlag_1();
 	void UI_EditFlag_2();
@@ -63,6 +64,7 @@ private:
 	friend void HookRenderTerrainTile(float, float, int, int, float, int, bool);
 	friend void HookOpenObj();
 	friend void HookOpenWorld();
+	friend bool HookTerrainHeightExt(int);
 
 	OBJECT* CollisionDetectObjects();
 	bool CollisionDetectLineToMesh(BMD*, vec3_t, vec3_t, bool, int, int);
@@ -115,6 +117,18 @@ private:
 		OBJ_TYPE SaveObjectsType;
 	} SaveWorldConfig;
 
+	struct
+	{
+		int nWorld;
+		int nWorldID;
+
+		//ATT_TYPE LoadTerrainAttributeType;
+		OZB_TYPE LoadTerrainHeightType;
+		//OBJ_TYPE LoadObjectsType;
+	} LoadWorldConfig;
+
+
+
 	bool FreeMode;
 	bool BrushRing;
 	bool SelectRing;
@@ -149,7 +163,8 @@ private:
 		EDIT_LIGHT = 5,
 		EDIT_SOUND = 6,
 		EDIT_MONSTER = 7,
-		EDIT_SAVING
+		EDIT_SAVE,
+		EDIT_LOAD,
 	};
 
 	

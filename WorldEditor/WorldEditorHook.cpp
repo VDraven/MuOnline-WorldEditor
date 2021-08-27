@@ -5,6 +5,7 @@ void HookRenderTerrainTile(float xf, float yf, int xi, int yi, float lodf, int l
 void HookFixBmdName(char* DirName, char* ModelFileName, char bReAlloc);
 void HookOpenObj();
 void HookOpenWorld();
+bool HookTerrainHeightExt(int world);
 
 void WorldEditor::SetHooks()
 {
@@ -16,9 +17,18 @@ void WorldEditor::SetHooks()
 
 	//CALL 0xE8
 	SetCompleteHook(0xE8, OFFSET_HOOK_OPEN_WORLD, &HookOpenWorld);
+	SetCompleteHook(0xE8, OFFSET_HOOK_TERRAIN_HEIGHT_EXT, &HookTerrainHeightExt);
 }
 
 WorldEditor* WE = WorldEditor::Instance();
+
+bool HookTerrainHeightExt(int world)
+{
+	if (world == WE->LoadWorldConfig.nWorld)
+		return WE->LoadWorldConfig.LoadTerrainHeightType == OZB_192K ? true : false;
+	else
+		return __IsTerrainHeightExtMap(world);
+}
 
 void HookOpenWorld()
 {
