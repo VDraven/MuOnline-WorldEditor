@@ -9,6 +9,8 @@
 
 void WorldEditor::SaveWorld()
 {
+	BaseIO::SetOverwrite(1);
+
 	int nWorldID = SaveWorldConfig.nWorldID;
 	char szWorldName[32];
 	char szFileName[256];
