@@ -2,7 +2,8 @@
 https://youtu.be/629J5BmGAXQ  
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
   
-Tutorial Loading World & convert to lower versions
+Tutorial Loading World & convert to lower versions.  
+Ps: You also have to convert/save TerrainLight as OZJ (JPG) if need.  
 https://www.youtube.com/watch?v=uM_FCUafc5E  
 [![Tut1](https://img.youtube.com/vi/uM_FCUafc5E/hqdefault.jpg)](https://youtu.be/uM_FCUafc5E)  
 
