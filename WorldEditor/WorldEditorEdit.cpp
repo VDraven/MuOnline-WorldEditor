@@ -22,6 +22,7 @@ void WorldEditor::Edit()
 }
 
 //FIXME : Need a better way to rewrite this part !!!
+//FIXED : better a bit !!!
 void WorldEditor::EditCamera()
 {
 	if (!FreeMode) return;
@@ -35,6 +36,71 @@ void WorldEditor::EditCamera()
 	if (__IsKeyPress(VK_SUBTRACT))
 		CameraDistance = 100.0f * ((int)CameraDistance / 100) - 100.0f;
 
+	constexpr float MoveUpDown[8][2] = {
+		{0, TERRAIN_SCALE},
+		{TERRAIN_SCALE, TERRAIN_SCALE},
+		{TERRAIN_SCALE, 0},
+		{TERRAIN_SCALE, -TERRAIN_SCALE},
+		{0, -TERRAIN_SCALE},
+		{-TERRAIN_SCALE, -TERRAIN_SCALE},
+		{-TERRAIN_SCALE, 0},
+		{-TERRAIN_SCALE, +TERRAIN_SCALE},
+	};
+	constexpr float MoveLeftRight[8][2] = {
+		{-TERRAIN_SCALE, 0},
+		{-TERRAIN_SCALE, TERRAIN_SCALE},
+		{0, TERRAIN_SCALE},
+		{TERRAIN_SCALE, TERRAIN_SCALE},
+		{TERRAIN_SCALE, 0},
+		{TERRAIN_SCALE, -TERRAIN_SCALE},
+		{0, -TERRAIN_SCALE},
+		{-TERRAIN_SCALE, -TERRAIN_SCALE},
+	}; 
+
+	// modulus is not remainder
+	// -45 mod 360 = 315
+	// -45 % 360 = -45
+#define MOD(a,b) ((b + (a%b)) % b);
+	// just same as
+	// 	   	int angle = (int)CameraAngle[2] % 360;
+	//		if (angle < 0) angle += 360;
+	int angle = MOD((int)CameraAngle[2], 360);
+	int idx = (angle + 22) / 45;
+
+	if (__IsKeyRepeat(VK_UP))
+	{
+		HeroPos[0] += MoveUpDown[idx][0];
+		HeroPos[1] += MoveUpDown[idx][1];
+	}
+
+	if (__IsKeyRepeat(VK_DOWN))
+	{
+		HeroPos[0] -= MoveUpDown[idx][0];
+		HeroPos[1] -= MoveUpDown[idx][1];
+	}
+
+	if (__IsKeyRepeat(VK_LEFT))
+	{
+		HeroPos[0] += MoveLeftRight[idx][0];
+		HeroPos[1] += MoveLeftRight[idx][1];
+	}
+
+	if (__IsKeyRepeat(VK_RIGHT))
+	{
+		HeroPos[0] -= MoveLeftRight[idx][0];
+		HeroPos[1] -= MoveLeftRight[idx][1];
+	}
+
+	HeroPos[0] = Clamp(HeroPos[0], 0.0f, 256.0f * TERRAIN_SCALE);
+	HeroPos[1] = Clamp(HeroPos[1], 0.0f, 256.0f * TERRAIN_SCALE);
+
+	Hero->Object.Position[0] = HeroPos[0];
+	Hero->Object.Position[1] = HeroPos[1];
+	Hero->Object.Position[2] = HeroPos[2];
+
+	/*
+	* BEFORE FIXING
+	* 
 	int angle = (int)CameraAngle[2] % 360;
 	if (angle < 0) angle += 360;
 	angle = 45 * ((angle + 22) / 45);
@@ -181,6 +247,8 @@ void WorldEditor::EditCamera()
 	Hero->Object.Position[0] = HeroPos[0];
 	Hero->Object.Position[1] = HeroPos[1];
 	Hero->Object.Position[2] = HeroPos[2];
+	*/
+
 }
 
 void WorldEditor::EditObjects()
