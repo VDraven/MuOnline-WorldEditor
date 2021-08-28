@@ -49,7 +49,8 @@ private:
 	void EditCamera();
 
 	void SaveWorld();
-	void SaveTerrainLight(const char*, const char*);
+	void SaveTerrainLightBMP(const char*, const char*);
+	void SaveTerrainLightJPG(const char*, const char*);
 	void SaveTerrainHeight(const char*, const char*);
 	void SaveTerrainHeightNew(const char*, const char*);
 	void SaveTerrainMapping(const char*, const char*, int);

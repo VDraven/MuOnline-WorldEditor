@@ -1,5 +1,6 @@
 #include "WorldEditor.h"
 #include "Core/Core.h"
+#include "Core/OZJ.h"
 #include "Core/OZB.h"
 #include "Core/MAP.h"
 #include "Core/ATT.h"
@@ -18,9 +19,16 @@ void WorldEditor::SaveWorld()
 	const char* szDirSave = Plugin.DirSave.c_str();
 	sprintf(szWorldName, "World%d", nWorldID);
 
+	//Save Terrain Light (both types bmp + jpg)
+	//TerrainLight.ozb : new version
 	sprintf(szFileName, "%s\\Decrypted\\%s\\TerrainLight.bmp", szDirSave, szWorldName);
 	sprintf(szEncFileName, "%s\\%s\\TerrainLight.ozb", szDirSave, szWorldName);
-	SaveTerrainLight(szFileName, szEncFileName);
+	SaveTerrainLightBMP(szFileName, szEncFileName);
+	//TerrainLight.ozj : lower version like S6
+	sprintf(szFileName, "%s\\Decrypted\\%s\\TerrainLight.jpg", szDirSave, szWorldName);
+	sprintf(szEncFileName, "%s\\%s\\TerrainLight.ozj", szDirSave, szWorldName);
+	SaveTerrainLightJPG(szFileName, szEncFileName);
+
 
 	sprintf(szFileName, "%s\\Decrypted\\%s\\TerrainHeight.bmp", szDirSave, szWorldName);
 	sprintf(szEncFileName, "%s\\%s\\TerrainHeight.ozb", szDirSave, szWorldName);
@@ -51,7 +59,7 @@ void WorldEditor::SaveWorld()
 	SaveNaviMap(szFileName, szEncFileName);
 }
 
-void WorldEditor::SaveTerrainLight(const char* szFileName, const char* szEncFileName)
+void WorldEditor::SaveTerrainLightBMP(const char* szFileName, const char* szEncFileName)
 {
 	if (!szFileName) return;
 	CreateParentDir(szFileName);
@@ -62,6 +70,7 @@ void WorldEditor::SaveTerrainLight(const char* szFileName, const char* szEncFile
 	for (int i = 0; i < SZ; i++)
 	{
 		float* pLight = &TerrainLight[0][0];
+		//Flip
 		buffer[3 * i + 0] = (BYTE)Clamp((int)(pLight[3 * i + 2] * 255.f), 0, 255);
 		buffer[3 * i + 1] = (BYTE)Clamp((int)(pLight[3 * i + 1] * 255.f), 0, 255);
 		buffer[3 * i + 2] = (BYTE)Clamp((int)(pLight[3 * i + 0] * 255.f), 0, 255);
@@ -73,6 +82,31 @@ void WorldEditor::SaveTerrainLight(const char* szFileName, const char* szEncFile
 	{
 		CreateParentDir(szEncFileName);
 		sInstance(OZB)->Pack(szFileName, szEncFileName);
+	}
+}
+
+void WorldEditor::SaveTerrainLightJPG(const char* szFileName, const char* szEncFileName)
+{
+	if (!szFileName) return;
+	CreateParentDir(szFileName);
+
+	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
+	constexpr size_t BITS_SIZE = SZ * 3;
+	std::vector<BYTE> buffer(BITS_SIZE);
+	for (int i = 0; i < SZ; i++)
+	{
+		float* pLight = &TerrainLight[0][0];
+		//No Flip
+		buffer[3 * i + 0] = (BYTE)Clamp((int)(pLight[3 * i + 0] * 255.f), 0, 255);
+		buffer[3 * i + 1] = (BYTE)Clamp((int)(pLight[3 * i + 1] * 255.f), 0, 255);
+		buffer[3 * i + 2] = (BYTE)Clamp((int)(pLight[3 * i + 2] * 255.f), 0, 255);
+	}
+	WriteJpeg(szFileName, TERRAIN_SIZE, TERRAIN_SIZE, buffer.data(), 100);
+
+	if (fs::exists(szFileName) && szEncFileName)
+	{
+		CreateParentDir(szEncFileName);
+		sInstance(OZJ)->Pack(szFileName, szEncFileName);
 	}
 }
 
