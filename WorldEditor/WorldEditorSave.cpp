@@ -65,9 +65,9 @@ void WorldEditor::SaveTerrainLightBMP(const char* szFileName, const char* szEncF
 	CreateParentDir(szFileName);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
-	constexpr size_t BITS_SIZE = SZ * 3;
-	std::vector<BYTE> buffer(BITS_SIZE);
-	for (int i = 0; i < SZ; i++)
+	constexpr size_t BUF_SIZE = SZ * 3;
+	std::vector<BYTE> buffer(BUF_SIZE);
+	for (size_t i = 0; i < SZ; i++)
 	{
 		float* pLight = &TerrainLight[0][0];
 		//Flip
@@ -91,9 +91,9 @@ void WorldEditor::SaveTerrainLightJPG(const char* szFileName, const char* szEncF
 	CreateParentDir(szFileName);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
-	constexpr size_t BITS_SIZE = SZ * 3;
-	std::vector<BYTE> buffer(BITS_SIZE);
-	for (int i = 0; i < SZ; i++)
+	constexpr size_t BUF_SIZE = SZ * 3;
+	std::vector<BYTE> buffer(BUF_SIZE);
+	for (size_t i = 0; i < SZ; i++)
 	{
 		float* pLight = &TerrainLight[0][0];
 		//No Flip
@@ -118,9 +118,10 @@ void WorldEditor::SaveTerrainHeight(const char* szFileName, const char* szEncFil
 	if (!szFileName) return;
 	CreateParentDir(szFileName);
 
-	constexpr size_t BITS_SIZE = TERRAIN_SIZE * TERRAIN_SIZE;
-	std::vector<BYTE> buffer(BITS_SIZE);
-	for (int i = 0; i < BITS_SIZE; i++)
+	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
+	constexpr size_t BUF_SIZE = SZ;
+	std::vector<BYTE> buffer(BUF_SIZE);
+	for (size_t i = 0; i < SZ; i++)
 	{
 		int height = (int)(BackTerrainHeight[i] / 1.5f);
 		buffer[i] = (BYTE)Clamp(height, 0, 255);
@@ -141,9 +142,9 @@ void WorldEditor::SaveTerrainHeightNew(const char* szFileName, const char* szEnc
 	CreateParentDir(szFileName);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
-	constexpr size_t BITS_SIZE = SZ * 3;
-	std::vector<BYTE> buffer(BITS_SIZE);
-	for (int i = 0; i < SZ; i++)
+	constexpr size_t BUF_SIZE = SZ * 3;
+	std::vector<BYTE> buffer(BUF_SIZE);
+	for (size_t i = 0; i < SZ; i++)
 	{
 		int height = (int)BackTerrainHeight[i] + 500;
 		//flip
@@ -167,12 +168,14 @@ void WorldEditor::SaveTerrainMapping(const char* szFileName, const char* szEncFi
 	FILE* fp = fopen(szFileName, "wb");
 	if (!fp) return;
 
+	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
+
 	BYTE Version = 0;
 	fwrite(&Version, 1, 1, fp);
 	fwrite(&iMapNumber, 1, 1, fp);	//
 	fwrite(TerrainMappingLayer1, TERRAIN_SIZE * TERRAIN_SIZE, 1, fp);
 	fwrite(TerrainMappingLayer2, TERRAIN_SIZE * TERRAIN_SIZE, 1, fp);
-	for (int i = 0; i < TERRAIN_SIZE * TERRAIN_SIZE; i++)
+	for (size_t i = 0; i < SZ; i++)
 	{
 		BYTE Alpha = (BYTE) Clamp((int)(TerrainMappingAlpha[i] * 255.f), 0, 255);
 		fwrite(&Alpha, 1, 1, fp);
@@ -201,9 +204,10 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 	fwrite(&Height, 1, 1, fp);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
+	constexpr size_t BUF_SIZE = SZ;
 	if (SaveWorldConfig.SaveTerrainAttributeType == ATT_TYPE::ATT_64K)
 	{
-		std::vector<BYTE> buffer(SZ);
+		std::vector<BYTE> buffer(BUF_SIZE);
 		for (size_t i = 0; i < SZ; i++)
 		{
 			buffer[i] = (BYTE)(TerrainWall[i] & 0xFF);
@@ -232,12 +236,12 @@ void WorldEditor::SaveObjects(const char* szFileName, const char* szEncFileName,
 
 	short ObjectCount = 0;
 	BYTE Version = SaveWorldConfig.SaveObjectsType;
-	fwrite(&Version, sizeof(BYTE), 1, fp);
+	fwrite(&Version, 1, 1, fp);
 	fwrite(&iMapNumber, 1, 1, fp);
 	fseek(fp, 4, SEEK_SET);
-	for (int i = 0; i < 16; i++)
+	for (size_t i = 0; i < 16; i++)
 	{
-		for (int j = 0; j < 16; j++)
+		for (size_t j = 0; j < 16; j++)
 		{
 			OBJECT_BLOCK* ob = &ObjectBlock[i * 16 + j];
 			OBJECT* o = ob->Head;
@@ -276,7 +280,7 @@ void WorldEditor::SaveObjects(const char* szFileName, const char* szEncFileName,
 			}
 		}
 	}
-	int EndPoint = ftell(fp);
+	long EndPoint = ftell(fp);
 	fseek(fp, 2, SEEK_SET);
 	fwrite(&ObjectCount, 2, 1, fp);
 	fseek(fp, EndPoint, SEEK_SET);
@@ -317,9 +321,9 @@ void WorldEditor::SaveNaviMap(const char* szFileName, const char* szEncFileName)
 	constexpr BYTE COLOR_SAFE[4] { 192 , 254 , 243 , 118 };
 
 	constexpr size_t SZ = 512 * 512;
+	constexpr size_t BUF_SIZE = 4 * SZ;
 
-	std::vector<BYTE> buffer;
-	buffer.resize(4 * SZ, 0);
+	std::vector<BYTE> buffer(BUF_SIZE, 0);
 
 	typedef BYTE QuadRow[512][4];
 	QuadRow* data = (QuadRow*) buffer.data();

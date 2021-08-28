@@ -286,8 +286,34 @@ void WorldEditor::UI_SaveWorld()
 {
 	EditFlag = WorldEditor::EDIT_SAVE;
 
-	ImGui::InputInt("SaveWorldID", &SaveWorldConfig.nWorldID, 1, 10);
-	if (SaveWorldConfig.nWorldID < 1) SaveWorldConfig.nWorldID = 1;
+	SaveWorldConfig.nWorldID = __GetWorldID(SaveWorldConfig.nWorld);
+	ImGui::Text("SaveWorldID: %d", SaveWorldConfig.nWorldID);
+
+	ImGui::InputInt("SaveWorld", &SaveWorldConfig.nWorld, 1, 10);
+	if (SaveWorldConfig.nWorld < 0) SaveWorldConfig.nWorld = 0;
+
+	const char* combo_preview_value;
+	if (WORLD_LIST.find(SaveWorldConfig.nWorld) != WORLD_LIST.end())
+		combo_preview_value = WORLD_LIST.at(SaveWorldConfig.nWorld).c_str();
+	else
+		combo_preview_value = "Unk World !!!";
+	if (ImGui::BeginCombo("##SaveWorldList", combo_preview_value))
+	{
+		for (auto& p : WORLD_LIST)
+		{
+			const bool is_selected = (p.first == SaveWorldConfig.nWorld);
+
+			if (ImGui::Selectable(p.second.c_str(), is_selected))
+				SaveWorldConfig.nWorld = p.first;
+
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+	}
+
+	ImGui::Separator();
 
 	ImGui::Text("SaveDir: ");
 	ImGui::TextWrapped("%s\\World%d", Plugin.DirSave.c_str(), SaveWorldConfig.nWorldID);
@@ -295,6 +321,8 @@ void WorldEditor::UI_SaveWorld()
 	ImGui::Combo("AttributeType", (int*)&SaveWorldConfig.SaveTerrainAttributeType, "ATT_64K\0ATT_128K\0\0");
 	ImGui::Combo("HeightType", (int*)&SaveWorldConfig.SaveTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
 	ImGui::Combo("ObjectsType", (int*)&SaveWorldConfig.SaveObjectsType, "OBJ_V0\0OBJ_V1\0OBJ_V2\0OBJ_V3\0\0");
+
+	ImGui::Separator();
 
 	static DWORD LastSave = 0;
 	bool cooling_down = (GetTickCount() - LastSave) < 5000;
@@ -319,11 +347,49 @@ void WorldEditor::UI_LoadWorld()
 	ImGui::InputInt("LoadWorld", &LoadWorldConfig.nWorld, 1, 10);
 	if (LoadWorldConfig.nWorld < 0) LoadWorldConfig.nWorld = 0;
 
-	ImGui::Text("LoadDirs: ");
-	ImGui::TextWrapped("Data\\World%d", LoadWorldConfig.nWorldID);
-	ImGui::TextWrapped("Data\\Object%d", LoadWorldConfig.nWorldID);
+	const char* combo_preview_value;
+	if (WORLD_LIST.find(LoadWorldConfig.nWorld) != WORLD_LIST.end())
+		combo_preview_value = WORLD_LIST.at(LoadWorldConfig.nWorld).c_str();
+	else
+		combo_preview_value = "Unk World !!!";
+	if (ImGui::BeginCombo("##LoadWorldList", combo_preview_value))
+	{
+		for (auto& p : WORLD_LIST)
+		{
+			const bool is_selected = (p.first == LoadWorldConfig.nWorld);
 
-	ImGui::Combo("HeightType", (int*)&LoadWorldConfig.LoadTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
+			if (ImGui::Selectable(p.second.c_str(), is_selected))
+				LoadWorldConfig.nWorld = p.first;
+
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+	}
+
+	ImGui::Separator();
+
+	ImGui::Text("LoadDirs: ");
+	char szDirWorld[256];
+	char szDirObject[256];
+	sprintf(szDirWorld, "Data\\World%d", LoadWorldConfig.nWorldID);
+	sprintf(szDirObject, "Data\\Object%d", LoadWorldConfig.nWorldID);
+
+	const ImVec4 RED_COLOR = { 1.0f, 0.0f, 0.0f, 1.0f };
+	const ImVec4 GREEN_COLOR = { 0.0f, 1.0f, 0.0f, 1.0f };
+	bool b1 = fs::exists(szDirWorld);
+	bool b2 = fs::exists(szDirObject);
+	ImGui::TextColored(b1 ? GREEN_COLOR : RED_COLOR, szDirWorld);
+	ImGui::TextColored(b2 ? GREEN_COLOR : RED_COLOR, szDirObject);
+
+	// will check it later by file size in 
+	// bool HookTerrainHeightExt(int world)
+	//ImGui::Combo("HeightType", (int*)&LoadWorldConfig.LoadTerrainHeightType, "OZB_64K\0OZB_192K\0\0");
+
+	ImGui::Separator();
+
+	if (!b1 || !b2) return;
 
 	static DWORD LastLoad = 0;
 	bool cooling_down = (GetTickCount() - LastLoad) < 5000;

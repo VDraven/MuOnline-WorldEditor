@@ -560,8 +560,6 @@ struct CHARACTER
 	{32, "Devil Square"}, \
 	{33, "Aida"}, \
 	{34, "Crywolf"}, \
-	{34, "Crywolf"}, \
-	{34, "Crywolf"}, \
 	{35, "CrywolfSecondZone"}, \
 	{36, "Kalima 7"}, \
 	{37, "Kanturu"}, \

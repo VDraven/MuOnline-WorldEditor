@@ -91,8 +91,8 @@ void WorldEditor::EditCamera()
 		HeroPos[1] -= MoveLeftRight[idx][1];
 	}
 
-	HeroPos[0] = Clamp(HeroPos[0], 0.0f, 256.0f * TERRAIN_SCALE);
-	HeroPos[1] = Clamp(HeroPos[1], 0.0f, 256.0f * TERRAIN_SCALE);
+	HeroPos[0] = Clamp(HeroPos[0], 0.5f * TERRAIN_SCALE, 255.5f * TERRAIN_SCALE);
+	HeroPos[1] = Clamp(HeroPos[1], 0.5f * TERRAIN_SCALE, 255.5f * TERRAIN_SCALE);
 
 	Hero->Object.Position[0] = HeroPos[0];
 	Hero->Object.Position[1] = HeroPos[1];

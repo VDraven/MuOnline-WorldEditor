@@ -24,10 +24,32 @@ WorldEditor* WE = WorldEditor::Instance();
 
 bool HookTerrainHeightExt(int world)
 {
-	if (world == WE->LoadWorldConfig.nWorld)
-		return WE->LoadWorldConfig.LoadTerrainHeightType == OZB_192K ? true : false;
-	else
-		return __IsTerrainHeightExtMap(world);
+	int world_id = __GetWorldID(world);
+	char szDirWorld[256];
+	char szFileName[256];
+	
+	sprintf(szDirWorld, "Data\\World%d", world_id);
+	if (!fs::exists(szDirWorld)) return false;
+
+	sprintf(szFileName, "%s\\TerrainHeight.OZB", szDirWorld, world_id);
+	if (!fs::exists(szFileName)) return false;
+
+	size_t file_size = fs::file_size(szFileName);
+
+	switch (file_size)
+	{
+	case 196'666:	//OZB_192K
+		return true;
+	case 66'620:	//OZB_64K
+		return false;
+	default:		//UNK
+		return false;
+	}
+
+	//if (world == WE->LoadWorldConfig.nWorld)
+	//	return WE->LoadWorldConfig.LoadTerrainHeightType == OZB_192K ? true : false;
+	//else
+	//	return __IsTerrainHeightExtMap(world);
 }
 
 void HookOpenWorld()
