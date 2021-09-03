@@ -6,7 +6,7 @@ Please post it on ragezone or my original thread instead. https://forum.ragezone
 https://youtu.be/629J5BmGAXQ  
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
   
-Tutorial Load World
+[Tutorial] Loading World
 https://www.youtube.com/watch?v=uM_FCUafc5E  
 [![Tut1](https://img.youtube.com/vi/uM_FCUafc5E/hqdefault.jpg)](https://youtu.be/uM_FCUafc5E)  
 
