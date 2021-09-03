@@ -1,9 +1,12 @@
 ## MuOnline-WorldEditor  
+  
+If you want to ask or look for help, please don't open issues here. Because it will not be process.  
+Please post it on ragezone or my original thread instead. https://forum.ragezone.com/f197/release-source-mu-online-world-1199965/  
+  
 https://youtu.be/629J5BmGAXQ  
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
   
-Tutorial Loading World & convert to lower versions.  
-Ps: You also have to convert/save TerrainLight as OZJ (JPG) if need.  
+Tutorial Load World
 https://www.youtube.com/watch?v=uM_FCUafc5E  
 [![Tut1](https://img.youtube.com/vi/uM_FCUafc5E/hqdefault.jpg)](https://youtu.be/uM_FCUafc5E)  
 
