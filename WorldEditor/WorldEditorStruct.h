@@ -13,7 +13,8 @@ struct Matrix4 { float _M[4][4]; };
 enum ATT_TYPE
 {
 	ATT_64K,
-	ATT_128K
+	ATT_128K,
+	ATT_SERVER_64K,
 };
 
 enum OZB_TYPE

@@ -124,7 +124,7 @@ private:
 		int nWorldID;
 
 		//ATT_TYPE LoadTerrainAttributeType;
-		OZB_TYPE LoadTerrainHeightType;
+		//OZB_TYPE LoadTerrainHeightType;
 		//OBJ_TYPE LoadObjectsType;
 	} LoadWorldConfig;
 

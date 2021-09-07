@@ -87,7 +87,7 @@ typedef vec3_t VertexTransform_t[2][15000];
 #define __DisableTexture				((void(_cdecl*)(bool))	0x0066D35F)
 #define __BeginSprite					((void(*)())			0x0066E67A)
 #define __BeginBitmap					((void(*)())			0x0066F5C3)
-#define __BeginOpengl					((void(*)())			0x0066D8A5)
+#define __BeginOpengl					((void(_cdecl*)(int, int, int, int))	0x0066D8A5)
 #define __EndSprite						((void(*)())			0x0066E68B)
 #define __EndBitmap						((void(*)())			0x0066F6A0)
 #define __EndOpengl						((void(*)())			0x0066DFB1)

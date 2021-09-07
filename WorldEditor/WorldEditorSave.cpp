@@ -38,6 +38,13 @@ void WorldEditor::SaveWorld()
 	sprintf(szEncFileName, "%s\\%s\\EncTerrain%d.map", szDirSave, szWorldName, nWorldID);
 	SaveTerrainMapping(szFileName, szEncFileName, nWorldID);
 
+	//Server Terrain ATT File
+	auto old_value = SaveWorldConfig.SaveTerrainAttributeType;
+	SaveWorldConfig.SaveTerrainAttributeType = ATT_TYPE::ATT_SERVER_64K;
+	sprintf(szFileName, "%s\\%s\\ServerTerrain%d.att", szDirSave, szWorldName, nWorldID);
+	SaveTerrainAttribute(szFileName, NULL, nWorldID);
+	SaveWorldConfig.SaveTerrainAttributeType = old_value;
+	//Client Terrain ATT File
 	sprintf(szFileName, "%s\\Decrypted\\%s\\Terrain%d.tta", szDirSave, szWorldName, nWorldID);
 	sprintf(szEncFileName, "%s\\%s\\EncTerrain%d.att", szDirSave, szWorldName, nWorldID);
 	SaveTerrainAttribute(szFileName, szEncFileName, nWorldID);
@@ -196,16 +203,21 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 	if (!fp) return;
 
 	BYTE Version = 0;
-	BYTE Width = 255;		//Webzen's troll ??? 256 instead (width/height is not index)
-	BYTE Height = 255;		//Don't change to 256, client will check these values
+	BYTE Width = 255;		
+	BYTE Height = 255;		//Don't change! Client will check these values, even it's nonsense
 	fwrite(&Version, 1, 1, fp);
-	fwrite(&iMapNumber, 1, 1, fp);
+	if(SaveWorldConfig.SaveTerrainAttributeType != ATT_SERVER_64K)
+		fwrite(&iMapNumber, 1, 1, fp);
 	fwrite(&Width, 1, 1, fp);
 	fwrite(&Height, 1, 1, fp);
 
 	constexpr size_t SZ = TERRAIN_SIZE * TERRAIN_SIZE;
 	constexpr size_t BUF_SIZE = SZ;
-	if (SaveWorldConfig.SaveTerrainAttributeType == ATT_TYPE::ATT_64K)
+	if (SaveWorldConfig.SaveTerrainAttributeType == ATT_TYPE::ATT_128K)
+	{
+		fwrite(TerrainWall, 2 * SZ, 1, fp);
+	}
+	else
 	{
 		std::vector<BYTE> buffer(BUF_SIZE);
 		for (size_t i = 0; i < SZ; i++)
@@ -213,10 +225,6 @@ void WorldEditor::SaveTerrainAttribute(const char* szFileName, const char* szEnc
 			buffer[i] = (BYTE)(TerrainWall[i] & 0xFF);
 		}
 		fwrite(buffer.data(), SZ, 1, fp);
-	}
-	else
-	{
-		fwrite(TerrainWall, 2 * SZ, 1, fp);
 	}
 
 	fclose(fp);
