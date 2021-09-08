@@ -1,4 +1,4 @@
-## MuOnline-WorldEditor  
+# MuOnline-WorldEditor  
   
 This is an in-game WorldEditor for Mu Online Season 16e1 (Main version : 1.19.46)  
 (No support for other versions)  
@@ -7,7 +7,7 @@ If you want to ask or look for help, please don't open issues here. Because it w
 Please post it on ragezone or my original thread instead.  
 https://forum.ragezone.com/f197/release-source-mu-online-world-1199965/  
   
-# This project has been completed (SEP 2021).  
+### This project has been completed (SEP 2021).  
 (The external data will NOT be implemented further, due to incompatibility)  
   
 https://youtu.be/629J5BmGAXQ  
