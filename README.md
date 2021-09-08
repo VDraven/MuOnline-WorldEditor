@@ -8,7 +8,7 @@ Please post it on ragezone or my original thread instead.
 https://forum.ragezone.com/f197/release-source-mu-online-world-1199965/  
   
 ### This project has been completed (SEP 2021).  
-(The external data will NOT be implemented further, due to incompatibility)  
+(The external data module will NOT be implemented further, due to incompatibility)  
   
 https://youtu.be/629J5BmGAXQ  
 [![WorldEditor](https://img.youtube.com/vi/629J5BmGAXQ/hqdefault.jpg)](https://youtu.be/629J5BmGAXQ)  
