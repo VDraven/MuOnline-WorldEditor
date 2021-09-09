@@ -169,6 +169,13 @@ void ReplaceString(std::string &src, std::string const& search, std::string cons
 
 void CreateParentDir(fs::path pPath)
 {
+	//fs::path pParent = fs::_Parse_parent_path(pPath.wstring());
+	//fs::create_directories(pParent);
+
 	fs::path pParent = fs::_Parse_parent_path(pPath.wstring());
-	fs::create_directories(pParent);
+	if (!pParent.empty() && !fs::exists(pParent))
+	{
+		CreateParentDir(pParent);
+		fs::create_directory(pParent);
+	}
 }
